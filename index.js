@@ -8,6 +8,10 @@ const mongoose = require('./mongoose')
 const bcrypt = require('bcrypt');
 const saltRounds = 12;
 
+const fs = require('fs');
+const path = require('path');
+const { get } = require('http');
+
 const app = express();
 app.set('view engine', 'ejs');
 
@@ -113,7 +117,12 @@ app.post('/login', async (req, res) => {
             return res.render('login', { error: 'Invalid username or password', username });
         }
 
-        req.session.user = { username };
+        // req.session.user = { username };
+        req.session.user = {
+            user_id: rows[0].user_id,
+            username: rows[0].username
+        };
+
         res.redirect('/');
 
     } catch (error) {
@@ -155,13 +164,24 @@ app.post('/signup', async (req, res) => {
 });
 
 //members
-app.get('/members', (req, res) => {
+app.get('/members', async (req, res) => {
     requireLogin(req, res);
     const username = req.session.user.username;
     const images = ['ukiyoe1.webp', 'ukiyoe2.webp', 'ukiyoe3.webp'];
     const randomImage = images[Math.floor(Math.random() * images.length)];
 
-    res.render("members", { username, randomImage });
+    // const sqlFilePath = path.join(__dirname, 'queries/getRooms.sql');
+    const getRoomListQuery = fs.readFileSync(abs_path('/queries/get_room_list.sql'), 'utf8');
+    let rooms;
+
+    try {
+        [rooms] = await database.query(getRoomListQuery, [username])
+    } catch (error) {
+        console.error("Error fetching chat rooms:", error);
+        res.status(500).send("Server error");
+    }
+    
+    res.render("members", { username, randomImage, rooms });
 
 });
 
@@ -176,6 +196,48 @@ app.get('/logout', (req, res) => {
         res.redirect('/');
     });
 });
+
+// chat room
+app.get('/room/:room_id', async (req, res) => {
+    requireLogin(req, res);
+
+    const username = req.session.user.username;
+    const user_id = req.session.user.user_id;
+
+    const roomId = req.params.room_id;
+
+    try {
+        // check if user is a member of the room
+        const [membership] = await database.query(
+            `SELECT ru.room_user_id 
+             FROM room_user ru
+             WHERE ru.room_id = ? AND ru.user_id = ?`,
+            [roomId, user_id]
+        );
+
+        if (membership.length === 0) {
+            return res.status(400).send('Bad Request: You are not a member of this room.');
+        }
+
+        // get messages for the room
+        const [messages] = await database.query(
+            `SELECT m.message_id, m.text, m.sent_datetime, u.username
+             FROM message AS m
+             INNER JOIN room_user AS ru ON m.room_user_id = ru.room_user_id
+             INNER JOIN user AS u ON ru.user_id = u.user_id
+             WHERE ru.room_id = ? 
+             ORDER BY m.sent_datetime ASC`,
+            [roomId]
+        );
+
+        res.render('room', { roomId, messages });
+
+    } catch (error) {
+        console.error('Error fetching messages for room:', error);
+        res.status(500).send('Server error');
+    }
+});
+
 
 
 app.get("*", (req, res) => {

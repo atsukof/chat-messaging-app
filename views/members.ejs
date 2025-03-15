@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Members</title>
+</head>
+<body>
+  <h1>Hello, <%= username %>.</h1>
+  <p>This is an AI-generated Japanese ukiyoe image.</p>
+  <p>For more information, visit <a href="https://www.maginative.com/article/sakana-ai-launches-new-models-for-ukiyo-e-art-generation-and-colorization/"> this article</a>.</p>
+
+  <div>
+      <img src="<%= randomImage %>" alt="Generated Ukiyoe Image" style="max-width:400px;">
+</div>
+
+  <br />
+  <button onclick="location.href='/logout'">sign out</button>
+</body>
+</html>

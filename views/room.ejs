@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Members</title>
+</head>
+
+<body>
+    <h1>Room <%= roomId %></h1>
+    <% if (messages && messages.length> 0) { %>
+        <ul>
+            <% messages.forEach(msg=> { %>
+                <li>
+                    <strong>
+                        <%= msg.username %>
+                    </strong> [<%= msg.sent_datetime %>]:
+                        <%= msg.text %>
+                </li>
+                <% }); %>
+        </ul>
+        <% } else { %>
+            <p>No message in the room.</p>
+            <% } %>
+</body>
+
+</html>
+

@@ -203,7 +203,6 @@ app.get('/room/:room_id', async (req, res) => {
 
     const username = req.session.user.username;
     const user_id = req.session.user.user_id;
-
     const roomId = req.params.room_id;
 
     try {

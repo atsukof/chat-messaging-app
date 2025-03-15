@@ -13,8 +13,26 @@ app.set('view engine', 'ejs');
 
 const database = include('./databaseConnection');
 const db_utils = include('database/db_utils');
-const db_users = include('database/users');
 const success = db_utils.printMySQLVersion();
+
+const db_users = include('database/users');
+const db_create_tables = include('database/create_tables');
+
+async function setupTables() {
+    // setup tables if they don't exist
+    if (success) {
+        try {
+            await db_create_tables.createTables();
+        } catch (error) {
+            console.error('error:', error);
+        }
+    } else {
+        console.error('Failed to connect to MySQL');
+    }
+}
+
+setupTables();
+
 
 const store = new MongoDBStore({
     uri: process.env.MONGODB_URI,
@@ -83,7 +101,7 @@ app.post('/login', async (req, res) => {
     }
 
     try {
-        const [rows] = await database.query('SELECT * FROM users WHERE username = ?', [username]);
+        const [rows] = await database.query('SELECT * FROM user WHERE username = ?', [username]);
         if (rows.length === 0) {
             return res.render('login', { error: 'Invalid username or password', username });
         }
@@ -118,13 +136,13 @@ app.post('/signup', async (req, res) => {
     }
 
     try {
-        const [existingRows] = await database.query('SELECT * FROM users WHERE username = ?', [username]);
+        const [existingRows] = await database.query('SELECT * FROM user WHERE username = ?', [username]);
         if (existingRows.length > 0) {
             return res.render('signup', { error: 'Username is already taken.', username });
         }
 
         const hashedPassword = await bcrypt.hash(password, saltRounds);
-        await database.query('INSERT INTO users (username, password) VALUES (?, ?)', [username, hashedPassword]);
+        await database.query('INSERT INTO user (username, password) VALUES (?, ?)', [username, hashedPassword]);
 
         req.session.user = { username };
         res.redirect('/');

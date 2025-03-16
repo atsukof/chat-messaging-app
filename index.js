@@ -69,10 +69,6 @@ app.use(express.json());
 app.use(express.static(__dirname + "/public")); // use public folder for static files
 
 
-
-// temporary users array
-const users = [];
-
 // check if user is logged in
 function requireLogin(req, res, next) {
     if (!req.session || !req.session.user) {
@@ -206,18 +202,15 @@ app.get('/room/:room_id', async (req, res) => {
     const username = req.session.user.username;
     const userId = req.session.user.user_id;
     const roomId = req.params.room_id;
-
     const getMessagesQuery = fs.readFileSync(abs_path('/queries/get_messages.sql'), 'utf8');
     const getReactedEmojisQuery = fs.readFileSync(abs_path('/queries/get_reacted_emojis.sql'), 'utf8');
-
-    console.log(roomId)
 
     try {
         // check if user is a member of the room
         const [membership] = await database.query(
             `SELECT ru.room_user_id 
-             FROM room_user ru
-             WHERE ru.room_id = ? AND ru.user_id = ?`,
+            FROM room_user ru
+            WHERE ru.room_id = ? AND ru.user_id = ?`,
             [roomId, userId]
         );
 
@@ -225,13 +218,12 @@ app.get('/room/:room_id', async (req, res) => {
             return res.status(400).send('Bad Request: You are not a member of this room.');
         }
 
-        console.log(roomId)
-        // get messages for the room
+        // get messages and emoji reactions for the room
         const [messages] = await database.query(getMessagesQuery, [userId, roomId]);
-        // get reacted emojis
         const [reactedEmojis] = await database.query(getReactedEmojisQuery, [roomId]);
+        const [roomName] = await database.query('SELECT name AS room_name FROM room WHERE room_id = ?', [roomId]);
 
-        res.render('room', { roomId, messages, reactedEmojis, userId, username });
+        res.render('room', { roomId, messages, reactedEmojis, userId, username, roomName });
 
     } catch (error) {
         console.error('Error fetching messages for room:', error);
@@ -239,6 +231,122 @@ app.get('/room/:room_id', async (req, res) => {
     }
 });
 
+// send message
+app.post('/room/:room_id/send', async (req, res) => {
+    requireLogin(req, res);
+
+    const roomId = req.params.room_id;
+    const userId = req.session.user.user_id;
+    const { messageText } = req.body;  // message text
+
+    try {
+        // get room_user_id
+        const [roomUserRows] = await database.query(
+            `
+            SELECT room_user_id
+            FROM room_user
+            WHERE room_id = ? AND user_id = ?
+            `,
+            [roomId, userId]
+        );
+
+        if (roomUserRows.length === 0) {
+            return res.status(400).send('User is not a member of this room.');
+        }
+
+        const roomUserId = roomUserRows[0].room_user_id;
+        const sentDatetime = new Date();
+
+        await database.query(
+            `
+            INSERT INTO message (room_user_id, sent_datetime, text)
+            VALUES (?, ?, ?)
+            `,
+            [roomUserId, sentDatetime, messageText]
+        );
+
+        res.redirect(`/room/${roomId}`);
+    } catch (error) {
+        console.error('Error inserting new message:', error);
+        res.status(500).send('Server error');
+    }
+});
+
+
+//create new room page
+app.get('/create_room', async (req, res) => {
+    requireLogin(req, res);
+
+    const username = req.session.user.username;
+    const userId = req.session.user.user_id;
+
+    try {
+
+        const [userList] = await database.query(`
+            SELECT user_id, username FROM user WHERE user_id != ?
+            `, [userId]);
+
+        res.render('create_room', { error: null, username, userId, userList });
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        res.status(500).send('Server error');
+    }
+});
+
+
+//create new room post
+app.post('/create_room', async (req, res) => {
+    requireLogin(req, res);
+    const { roomName, inviteUsers } = req.body;
+    const userId = req.session.user.user_id;
+
+    if (!roomName) {
+        return res.redirect('create_room', { error: 'Room name is required'});
+    }
+
+    const username = req.session.user.username;
+
+    try {
+        const [existingRows] = await database.query('SELECT * FROM room WHERE name = ?', [roomName]);
+
+        if (existingRows.length > 0) {
+            const [userList] = await database.query(`
+            SELECT user_id, username FROM user WHERE user_id != ?
+            `, [userId]);
+            return res.render('create_room', { error: 'Room name is already taken.', username, userId, userList });
+        }
+
+        // create a new room
+        const [roomResult] = await database.query(
+            `INSERT INTO room (name) VALUES (?)`,
+            [roomName]
+        );
+        // get room_id of the created room
+        const newRoomId = roomResult.insertId;
+
+        // add the current user to the room
+        await database.query(
+            `INSERT INTO room_user (user_id, room_id, last_read_message_id) VALUES (?, ?, 0)`,
+            [userId, newRoomId]
+        );
+
+        // add invited users to the room after converting inviteUsers to an array
+        if (inviteUsers) {
+            const inviteArray = Array.isArray(inviteUsers) ? inviteUsers : [inviteUsers];
+            for (let i = 0; i < inviteArray.length; i++) {
+                const invitedUserId = inviteArray[i];
+                await database.query(
+                    `INSERT INTO room_user (user_id, room_id, last_read_message_id) VALUES (?, ?, 0)`,
+                    [invitedUserId, newRoomId]
+                );
+            }   
+            res.redirect(`/members`);
+            }    
+    } catch (error) {
+        console.error('Error creating new room:', error);
+        res.status(500).send('Server error');
+    }
+});
 
 
 app.get("*", (req, res) => {

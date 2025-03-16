@@ -4,25 +4,116 @@
 <head>
     <meta charset="UTF-8" />
     <title>Members</title>
+    <link rel="stylesheet" href="../css/room.css">
 </head>
 
 <body>
-    <h1>Room <%= roomId %></h1>
-    <% if (messages && messages.length> 0) { %>
-        <ul>
-            <% messages.forEach(msg=> { %>
-                <li>
-                    <strong>
-                        <%= msg.username %>
-                    </strong> [<%= msg.sent_datetime %>]:
-                        <%= msg.text %>
-                </li>
-                <% }); %>
-        </ul>
-        <% } else { %>
-            <p>No message in the room.</p>
+    <h1>Room: <%= roomName[0].room_name %></h1>
+
+    <% 
+        // グループ化: reactedEmojis をメッセージ毎、かつ絵文字毎にまとめる
+        let reactionsByMessage={}; reactedEmojis.forEach(function(reaction) {
+        let msgId=reaction.message_id;
+
+        if (!reactionsByMessage[msgId]) {
+            reactionsByMessage[msgId]={}; 
+        } 
+        let emojiId=reaction.emoji_id; 
+        if (!reactionsByMessage[msgId][emojiId]) {
+            reactionsByMessage[msgId][emojiId]= {
+                count: 0,
+                reactedByUser: false,
+                emoji_name: reaction.emoji_name,
+                emoji_image: reaction.emoji_image 
+            };
+        }
+        
+        reactionsByMessage[msgId][emojiId].count++;
+        if (reaction.reacter_id===userId) {
+            reactionsByMessage[msgId][emojiId].reactedByUser=true; 
+        } 
+        }); 
+        
+        // unread marker flag
+        let insertedUnreadMarker=false;
+
+    %>
+
+    <div>
+        <% if (messages && messages.length> 0) { %>
+            <% messages.forEach(msg=> {
+                // check if the message is sent by the user
+                let isSelf = (msg.sender_id && msg.sender_id === userId) || (!msg.sender_id && msg.sender_name ===username);
+            %>
+
+            <% // draw a line if the message is unread
+            if (!insertedUnreadMarker && msg.unread==1) {
+                insertedUnreadMarker=true; 
+            %>
+                <div class="unread-marker">
+                    <hr class="dotted-line">
+                    <p>unread messages</p>
+                </div>
             <% } %>
+
+                <div class="message-container <%= isSelf ? 'right' : 'left' %>">
+                    <div class="message-wrapper">
+                        <div class="sender-name">
+                            <%= msg.sender_name %>
+                        </div>
+                        <div class="message-box <%= isSelf ? 'self' : '' %>">
+                            <%= msg.text %>
+                        </div>
+                        <div class="sent-datetime">
+                            <%= msg.sent_datetime %>
+                        </div>
+
+                        <!-- emoji reactions -->
+                        <% if (reactionsByMessage[msg.message_id]) { %>
+                            <div class="reactions">
+                                <% Object.keys(reactionsByMessage[msg.message_id]).forEach(function(emojiId) { let
+                                    reaction=reactionsByMessage[msg.message_id][emojiId]; %>
+                                    <span class="reaction">
+                                        <img src="/<%= reaction.emoji_image %>" alt="<%= reaction.emoji_name %>" class="emoji-icon">
+                                        <% if (reaction.count> 1) { %>
+                                            <span class="reaction-count">
+                                                <%= reaction.count %>
+                                            </span>
+                                            <% } %>
+                                                <!-- check reaction by the user -->
+                                                <% if (reaction.reactedByUser) { %>
+                                                    <button class="reaction-btn remove-reaction" data-message-id="<%= msg.message_id %>"
+                                                        data-emoji-id="<%= emojiId %>">[-]</button>
+                                                    <% } else { %>
+                                                        <button class="reaction-btn add-reaction" data-message-id="<%= msg.message_id %>"
+                                                            data-emoji-id="<%= emojiId %>">[+]</button>
+                                                        <% } %>
+                                    </span>
+                                    <% }); %>
+                            </div>
+                            <% } else { %>
+                                <!-- もしそのメッセージに一件も反応がなければ、[+]ボタンを表示（※仮に1種類の絵文字追加用として） -->
+                                <div class="reactions">
+                                    <button class="reaction-btn add-reaction" data-message-id="<%= msg.message_id %>"
+                                        data-emoji-id="">[+]</button>
+                                </div>
+                                <% } %>
+
+                    </div>
+                </div>
+                <% }); %>
+                    <% } else { %>
+                        <p>No message in the room.</p>
+                        <% } %>
+    </div>
+
+    <!-- form for a new message -->
+<div class="new-message">
+    <form action="/room/<%= roomId %>/send" method="POST">
+        <textarea name="messageText" placeholder="Type your message here" required></textarea>
+        <button type="submit">Send</button>
+    </form>
+</div>
 </body>
 
 </html>
-

@@ -6,12 +6,13 @@
 </head>
 <body>
   <h1>Hello, <%= username %>.</h1>
-  <p>Your chat rooms</p>
-
   <div>
       <img src="<%= randomImage %>" alt="Generated Ukiyoe Image" style="max-width:400px;">
 </div>
 
+<button onclick="location.href='/create_room'">Create new room</button>
+  
+<p>Your chat rooms</p>
 <table border="1" cellspacing="0" cellpadding="5">
   <thead>
     <tr>

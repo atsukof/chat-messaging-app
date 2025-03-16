@@ -1,0 +1,47 @@
+/* message container */
+.message-container {
+    display: flex;
+    margin-bottom: 10px;
+}
+
+.message-container.left {
+    justify-content: flex-start;
+}
+
+.message-container.right {
+    justify-content: flex-end;
+}
+
+.message-wrapper {
+    max-width: 60%;
+    display: flex;
+    flex-direction: column;
+}
+
+.sender-name {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.message-box {
+    padding: 10px;
+    border-radius: 10px;
+    background-color: #f1f0f0;
+}
+
+/* message sent by the user */
+.message-box.self {
+    background-color: #d1ffd1;
+}
+
+.sent-datetime {
+    font-size: 0.8em;
+    color: gray;
+    margin-top: 2px;
+    text-align: right;
+}
+
+.emoji-icon {
+    width: 20px;
+    height: 20px;
+}

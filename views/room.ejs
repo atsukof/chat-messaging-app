@@ -3,12 +3,13 @@
 
 <head>
     <meta charset="UTF-8" />
-    <title>Members</title>
+    <title>Chat room</title>
     <link rel="stylesheet" href="../css/room.css">
 </head>
 
 <body>
     <h1>Room: <%= roomName[0].room_name %></h1>
+    <button onclick="location.href='/invite_people'">Invite people</button>
 
     <% 
         // グループ化: reactedEmojis をメッセージ毎、かつ絵文字毎にまとめる

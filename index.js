@@ -50,6 +50,7 @@ store.on('error', function (error) {
     console.log('Mongo DB error:', error);
 });
 
+
 app.use(
     session({
         secret: process.env.SESSION_SECRET,
@@ -66,6 +67,8 @@ app.use(
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(express.static(__dirname + "/public")); // use public folder for static files
+
+
 
 // temporary users array
 const users = [];
@@ -170,7 +173,6 @@ app.get('/members', async (req, res) => {
     const images = ['ukiyoe1.webp', 'ukiyoe2.webp', 'ukiyoe3.webp'];
     const randomImage = images[Math.floor(Math.random() * images.length)];
 
-    // const sqlFilePath = path.join(__dirname, 'queries/getRooms.sql');
     const getRoomListQuery = fs.readFileSync(abs_path('/queries/get_room_list.sql'), 'utf8');
     let rooms;
 
@@ -202,8 +204,13 @@ app.get('/room/:room_id', async (req, res) => {
     requireLogin(req, res);
 
     const username = req.session.user.username;
-    const user_id = req.session.user.user_id;
+    const userId = req.session.user.user_id;
     const roomId = req.params.room_id;
+
+    const getMessagesQuery = fs.readFileSync(abs_path('/queries/get_messages.sql'), 'utf8');
+    const getReactedEmojisQuery = fs.readFileSync(abs_path('/queries/get_reacted_emojis.sql'), 'utf8');
+
+    console.log(roomId)
 
     try {
         // check if user is a member of the room
@@ -211,25 +218,20 @@ app.get('/room/:room_id', async (req, res) => {
             `SELECT ru.room_user_id 
              FROM room_user ru
              WHERE ru.room_id = ? AND ru.user_id = ?`,
-            [roomId, user_id]
+            [roomId, userId]
         );
 
         if (membership.length === 0) {
             return res.status(400).send('Bad Request: You are not a member of this room.');
         }
 
+        console.log(roomId)
         // get messages for the room
-        const [messages] = await database.query(
-            `SELECT m.message_id, m.text, m.sent_datetime, u.username
-             FROM message AS m
-             INNER JOIN room_user AS ru ON m.room_user_id = ru.room_user_id
-             INNER JOIN user AS u ON ru.user_id = u.user_id
-             WHERE ru.room_id = ? 
-             ORDER BY m.sent_datetime ASC`,
-            [roomId]
-        );
+        const [messages] = await database.query(getMessagesQuery, [userId, roomId]);
+        // get reacted emojis
+        const [reactedEmojis] = await database.query(getReactedEmojisQuery, [roomId]);
 
-        res.render('room', { roomId, messages });
+        res.render('room', { roomId, messages, reactedEmojis, userId, username });
 
     } catch (error) {
         console.error('Error fetching messages for room:', error);

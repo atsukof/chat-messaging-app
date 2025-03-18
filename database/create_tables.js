@@ -18,8 +18,7 @@ async function createTables() {
         PRIMARY KEY (emoji_id)
         );
 
-    INSERT INTO emoji (name, image)
-    VALUES ('thumbs up', 'thumbsup.png'), ('100 percent', '100.png'), ('happy face', 'happy.png');
+    INSERT INTO emoji (name, image) VALUES ('thumbs up', 'thumbsup.png'), ('100 percent', '100.png'), ('happy face', 'happy.png');
     `;
 
     let createRoomSQL = `

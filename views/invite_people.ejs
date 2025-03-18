@@ -19,7 +19,7 @@
 
     <h1>Room: <%= roomName[0].room_name %> </h1>
 
-    <form action="/invite_people" method="POST">    
+    <form action="/invite_people/ <%= roomId %>" method="POST">    
         <!-- People to Invite -->
         <div class="form-group">
             <p>People to invite:</p>

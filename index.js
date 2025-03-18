@@ -165,13 +165,10 @@ app.post('/signup', async (req, res) => {
 
 });
 
-//members
+// members
 app.get('/members', async (req, res) => {
     requireLogin(req, res);
     const username = req.session.user.username;
-    const images = ['ukiyoe1.webp', 'ukiyoe2.webp', 'ukiyoe3.webp'];
-    const randomImage = images[Math.floor(Math.random() * images.length)];
-
     const getRoomListQuery = fs.readFileSync(abs_path('/queries/get_room_list.sql'), 'utf8');
     let rooms;
 
@@ -182,11 +179,11 @@ app.get('/members', async (req, res) => {
         res.status(500).send("Server error");
     }
     
-    res.render("members", { username, randomImage, rooms });
+    res.render("members", { username, rooms });
 
 });
 
-//logout
+// logout
 app.get('/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) {
@@ -378,10 +375,38 @@ app.get('/invite_people/:room_id', async (req, res) => {
         console.error("Error fetching invite list:", error);
         res.status(500).send("Server error");
     }
-
-
 });
 
+// invite people to room post
+app.post('/invite_people/:room_id', async (req, res) => {
+    console.log(req.body);
+
+    requireLogin(req, res);
+
+    // inviteUsers: an array of user IDs selected or a single value
+    // roomId: sent as a parameter in the URL
+    const { inviteUsers } = req.body;
+    const roomId = req.params.room_id
+
+    try {
+        if (!inviteUsers) {
+            return res.redirect(`/room/${roomId}`);
+        }
+
+        const invitedUsers = Array.isArray(inviteUsers) ? inviteUsers : [inviteUsers];
+        for (let i = 0; i < invitedUsers.length; i++) {
+            await database.query(
+                `INSERT INTO room_user (user_id, room_id, last_read_message_id) VALUES (?, ?, 0)`,
+                [invitedUsers[i], roomId]
+            );
+        }
+
+        res.redirect(`/room/${roomId}`);
+    } catch (error) {
+        console.error("Error inviting users:", error);
+        res.status(500).send("Server error");
+    }
+});
 
 
 app.get("*", (req, res) => {

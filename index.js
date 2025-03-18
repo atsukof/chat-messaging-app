@@ -272,6 +272,30 @@ app.post('/room/:room_id/send', async (req, res) => {
     }
 });
 
+// clear unread messages
+app.post('/room/:room_id/clear_unread', async (req, res) => {
+    requireLogin(req, res);
+    const roomId = req.params.room_id;
+    const userId = req.session.user.user_id;
+    const getMaxMessageIdQuery = fs.readFileSync(abs_path('/queries/get_max_message_id.sql'), 'utf8');
+
+    try {
+        // get the latest message ID in the room
+        const [latestResult] = await database.query(getMaxMessageIdQuery, [roomId]);
+        const lastMessageId = latestResult[0].last_message_id || 0;
+
+        // update the last_read_message_id for the user in the room
+        await database.query(
+            `UPDATE room_user SET last_read_message_id = ? WHERE room_id = ? AND user_id = ?`,
+            [lastMessageId, roomId, userId]
+        );
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Error clearing unread messages:", error);
+        res.status(500).json({ success: false });
+    }
+});
+
 
 //create new room page
 app.get('/create_room', async (req, res) => {

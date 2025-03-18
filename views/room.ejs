@@ -126,6 +126,14 @@
             </form>
         </div>
 
+<script>
+    // send a request when the user leaves the room
+    window.addEventListener('beforeunload', function (event) {
+        const roomId = "<%= roomId %>";
+        navigator.sendBeacon(`/room/${roomId}/clear_unread`);
+    });
+</script>
+
 </body>
 
 </html>

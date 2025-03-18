@@ -10,16 +10,14 @@ async function createTables() {
             UNIQUE INDEX unique_username (username ASC) VISIBLE);
 	`;
 
-    let createEmojiSQL = `
-    CREATE TABLE IF NOT EXISTS emoji (
-        emoji_id int NOT NULL AUTO_INCREMENT,
-        name varchar(50) NOT NULL,
-        image varchar(50) NOT NULL,
-        PRIMARY KEY (emoji_id)
-        );
-
-    INSERT INTO emoji (name, image) VALUES ('thumbs up', 'thumbsup.png'), ('100 percent', '100.png'), ('happy face', 'happy.png');
-    `;
+    // let createEmojiSQL = `
+    // CREATE TABLE IF NOT EXISTS emoji (
+    //     emoji_id int NOT NULL AUTO_INCREMENT,
+    //     name varchar(50) NOT NULL,
+    //     image varchar(50) NOT NULL,
+    //     PRIMARY KEY (emoji_id)
+    //     );
+    // `;
 
     let createRoomSQL = `
         CREATE TABLE IF NOT EXISTS room (
@@ -76,7 +74,7 @@ async function createTables() {
 
     try {
         const resultsUser = await database.query(createUserSQL);
-        const resultsEmoji = await database.query(createEmojiSQL);
+        // const resultsEmoji = await database.query(createEmojiSQL);
         const resultsRoom = await database.query(createRoomSQL);
         const resultsRoomUser = await database.query(createRoomUserSQL);
         const resultsMessage = await database.query(createMessageSQL);
@@ -84,7 +82,7 @@ async function createTables() {
 
 
         console.log(resultsUser[0]);
-        console.log(resultsEmoji[0]);
+        // console.log(resultsEmoji[0]);
         console.log(resultsRoom[0]);
         console.log(resultsRoomUser[0]);
         console.log(resultsMessage[0]);

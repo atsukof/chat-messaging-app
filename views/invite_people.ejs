@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Invite people</title>
+</head>
+
+<body>
+    <h1>Invite people to the room</h1>
+    
+    <% if (error) { %>
+        <p style="color: red;">
+            <%= error %>
+        </p>
+        <% } %>
+    
+    <img src="/invite.jpeg" alt="invite new people" style="max-width:200px;">
+
+    <h1>Room: <%= roomName[0].room_name %> </h1>
+
+    <form action="/invite_people" method="POST">    
+        <!-- People to Invite -->
+        <div class="form-group">
+            <p>People to invite:</p>
+            <% if (peopleToInvite && peopleToInvite.length> 0) { %>
+                <% peopleToInvite.forEach(function(user) { %>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="user_<%= user.user_id %>" name="inviteUsers" value="<%= user.user_id %>">
+                        <label for="user_<%= user.user_id %>">
+                            <%= user.username %>
+                        </label>
+                    </div>
+                    <% }); %>
+                        <% } else { %>
+                            <p>No people to invite.</p>
+                            <% } %>
+        </div>
+    
+        <!-- Submit Button -->
+        <button type="submit">Invite</button>
+    </form>
+</body>
+
+</html>

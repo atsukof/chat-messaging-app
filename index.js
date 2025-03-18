@@ -38,6 +38,9 @@ async function setupTables() {
 setupTables();
 
 
+
+
+
 const store = new MongoDBStore({
     uri: process.env.MONGODB_URI,
     collection: 'sessions',
@@ -347,6 +350,38 @@ app.post('/create_room', async (req, res) => {
         res.status(500).send('Server error');
     }
 });
+
+//invite users to room
+app.get('/invite_people/:room_id', async (req, res) => {
+    requireLogin(req, res);
+    const username = req.session.user.username;
+    const userId = req.session.user.user_id;
+    const roomId = req.params.room_id;
+
+    const getInviteListQuery = fs.readFileSync(abs_path('/queries/get_invite_list.sql'), 'utf8');
+    let people;
+
+    try {
+        // check if room_id exists
+        const [roomName] = await database.query(
+            'SELECT name AS room_name FROM room WHERE room_id = ?',
+            [roomId]
+        );
+        if (roomName.length === 0) {
+            return res.redirect('/members');
+        }
+
+        const [peopleToInvite] = await database.query(getInviteListQuery, [roomId, userId])
+
+        res.render("invite_people", { error: null, username, peopleToInvite, userId, roomId, roomName });
+    } catch (error) {
+        console.error("Error fetching invite list:", error);
+        res.status(500).send("Server error");
+    }
+
+
+});
+
 
 
 app.get("*", (req, res) => {

@@ -10,14 +10,14 @@ async function createTables() {
             UNIQUE INDEX unique_username (username ASC) VISIBLE);
 	`;
 
-    let createEmojiSQL = `
-    CREATE TABLE IF NOT EXISTS emoji (
-        emoji_id int NOT NULL AUTO_INCREMENT,
-        name varchar(50) NOT NULL,
-        image varchar(50) NOT NULL,
-        PRIMARY KEY (emoji_id)
-        );
-    `;
+    // let createEmojiSQL = `
+    // CREATE TABLE IF NOT EXISTS emoji (
+    //     emoji_id int NOT NULL AUTO_INCREMENT,
+    //     name varchar(50) NOT NULL,
+    //     image varchar(50) NOT NULL,
+    //     PRIMARY KEY (emoji_id)
+    //     );
+    // `;
 
     let createRoomSQL = `
         CREATE TABLE IF NOT EXISTS room (

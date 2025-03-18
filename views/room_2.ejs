@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Chat room</title>
+    <link rel="stylesheet" href="/css/room.css">
+</head>
+
+<body>
+    <% // Grouping reactions by message (server-side code) 
+        let reactionsByMessage={};
+        reactedEmojis.forEach(function(reaction) {
+            let msgId=reaction.message_id; 
+            if (!reactionsByMessage[msgId]) {
+                reactionsByMessage[msgId]={}; 
+            } 
+            let emojiId=reaction.emoji_id; 
+            if (!reactionsByMessage[msgId][emojiId]) {
+                reactionsByMessage[msgId][emojiId]={ count: 0, reactedByUser: false, emoji_name: reaction.emoji_name, emoji_image: reaction.emoji_image };
+            } 
+            reactionsByMessage[msgId][emojiId].count++; 
+            if (reaction.reacter_id===userId) {
+                reactionsByMessage[msgId][emojiId].reactedByUser=true; 
+            } }); 
+
+        let insertedUnreadMarker = false;   
+            
+        // Function to determine if current user has reacted for a message 
+        function userHasReacted(msgId) { 
+            if (!reactionsByMessage[msgId]) return false; 
+            let keys=Object.keys(reactionsByMessage[msgId]); 
+            for (let i=0; i < keys.length; i++) { 
+                if (reactionsByMessage[msgId][keys[i]].reactedByUser) {
+                    return true; 
+                } 
+            } 
+            return false;
+        } 
+    %>
+
+        <h1>Room: <%= roomName[0].room_name %>
+        </h1>
+        <div>
+            <button onclick="location.href='/invite_people/<%= roomId %>'">Invite people</button>
+            <button onclick="location.href='/members'">Go back to room list</button>
+        </div>
+
+        <div class="messages">
+            <% if (messages && messages.length> 0) { %>
+                <% messages.forEach(function(msg) { // Determine if the current user sent the message let
+                    isSelf=(msg.sender_id && msg.sender_id===userId) || (!msg.sender_id && msg.sender_name===username);
+                    // Check if current user has reacted to this message let hasReacted=userHasReacted(msg.message_id);
+                    %>
+                    <% if (!insertedUnreadMarker && msg.unread==1) { insertedUnreadMarker=true; %>
+                        <div class="unread-marker">
+                            <p>- - - - - - - unread messages - - - - - - -</p>
+                        </div>
+                        <% } %>
+
+                            <div class="message-container <%= isSelf ? 'right' : 'left' %>">
+                                <div class="message-wrapper">
+                                    <div class="sender-name">
+                                        <%= msg.sender_name %>
+                                    </div>
+                                    <div class="message-box <%= isSelf ? 'self' : '' %>">
+                                        <%= msg.text %>
+                                    </div>
+
+                                    <%
+                                    let d=new Date(msg.sent_datetime); 
+                                    let datePart=d.toLocaleDateString('en-US', { month: 'short' , day: 'numeric' , year: 'numeric' });
+                                    let timePart=d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' , hour12: false }); 
+                                    %>
+                                    
+                                    <div class="sent-datetime"><%= datePart %> <%= timePart %></div>
+
+                                    <!-- Reaction Button -->
+                                    <div class="reactions">
+                                        <% if (hasReacted) { %>
+                                            <!-- If the user has reacted, show [-] button -->
+                                            <button class="reaction-btn remove-reaction"
+                                                data-message-id="<%= msg.message_id %>">
+                                                [-]
+                                            </button>
+                                            <% } else { %>
+                                                <!-- If not reacted, show [+] button -->
+                                                <button class="reaction-btn add-reaction"
+                                                    data-message-id="<%= msg.message_id %>">
+                                                    [+]
+                                                </button>
+                                                <% } %>
+                                                    <!-- Display aggregated reaction counts for the message -->
+                                                    <span class="reaction-summary">
+                                                        <% if (reactionsByMessage[msg.message_id]) { let
+                                                            totalCount=0;
+                                                            Object.keys(reactionsByMessage[msg.message_id]).forEach(function(key)
+                                                            { totalCount
+                                                            +=reactionsByMessage[msg.message_id][key].count; }); if
+                                                            (totalCount> 0) { %>
+                                                            (<%= totalCount %>)
+                                                                <% } } %>
+                                                    </span>
+                                        </div>
+
+                                        <!-- Reaction Candidates: hidden by default -->
+                                        <div class="reaction-candidates" id="candidates-<%= msg.message_id %>"
+                                            style="display: none;">
+                                            <!-- Hardcoded candidate emojis; ideally, these come from your database -->
+                                            <span class="candidate" data-message-id="<%= msg.message_id %>"
+                                                data-emoji-id="1">
+                                                <img src="/emoji1.png" alt="Emoji 1" class="emoji-icon">
+                                            </span>
+                                            <span class="candidate" data-message-id="<%= msg.message_id %>"
+                                                data-emoji-id="2">
+                                                <img src="/emoji2.png" alt="Emoji 2" class="emoji-icon">
+                                            </span>
+                                            <span class="candidate" data-message-id="<%= msg.message_id %>"
+                                                data-emoji-id="3">
+                                                <img src="/emoji3.png" alt="Emoji 3" class="emoji-icon">
+                                            </span>
+                                        </div>
+
+                                </div>
+                            </div>
+                            <% }); %>
+                                <% } else { %>
+                                    <p>No message in the room.</p>
+                                    <% } %>
+        </div>
+
+        <!-- Form for a new message -->
+        <div class="new-message">
+            <form action="/room/<%= roomId %>/send" method="POST">
+                <textarea name="messageText" placeholder="Type your message here" required></textarea>
+                <button type="submit">Send</button>
+            </form>
+        </div>
+
+        <!-- Inline Script for Reaction Handling -->
+        <script>
+            // Utility to toggle candidate menu visibility for a given message
+            function toggleCandidates(messageId) {
+                const candidatesDiv = document.getElementById('candidates-' + messageId);
+                if (candidatesDiv.style.display === 'none') {
+                    candidatesDiv.style.display = 'block';
+                } else {
+                    candidatesDiv.style.display = 'none';
+                }
+            }
+
+            // Add click event listeners for reaction buttons
+            document.querySelectorAll('.reaction-btn').forEach(function (btn) {
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const messageId = this.getAttribute('data-message-id');
+                    // If it's an add reaction button, show candidate menu
+                    if (this.classList.contains('add-reaction')) {
+                        toggleCandidates(messageId);
+                    } else if (this.classList.contains('remove-reaction')) {
+                        // Remove reaction AJAX call
+                        // Replace with your actual endpoint
+                        fetch('/reaction/remove', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ messageId: messageId })
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    // Optionally, update the UI (e.g., hide candidates, update counts)
+                                    window.location.reload();
+                                }
+                            })
+                            .catch(err => console.error(err));
+                    }
+                });
+            });
+
+            // Add click event listeners for candidate emojis
+            document.querySelectorAll('.candidate').forEach(function (candidate) {
+                candidate.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const messageId = this.getAttribute('data-message-id');
+                    const emojiId = this.getAttribute('data-emoji-id');
+                    // Send AJAX request to add reaction
+                    // Replace with your actual endpoint
+                    fetch('/reaction/add', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ messageId: messageId, emojiId: emojiId })
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Optionally update the UI or reload the page
+                                window.location.reload();
+                            }
+                        })
+                        .catch(err => console.error(err));
+                });
+            });
+
+            // Optionally, hide candidate menus when clicking elsewhere
+            document.addEventListener('click', function (e) {
+                if (!e.target.classList.contains('reaction-btn') && !e.target.classList.contains('candidate') &&
+                    !e.target.closest('.reaction-candidates')) {
+                    document.querySelectorAll('.reaction-candidates').forEach(function (div) {
+                        div.style.display = 'none';
+                    });
+                }
+            });
+        </script>
+</body>
+
+</html>

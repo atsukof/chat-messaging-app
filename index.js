@@ -312,6 +312,54 @@ app.post('/room/:room_id/clear_unread', async (req, res) => {
     }
 });
 
+// add reaction to message
+app.post('/reaction/add', async (req, res) => {
+    requireLogin(req, res);
+    const userId = req.session.user.user_id;
+    const { messageId, emojiId } = req.body;
+
+    console.log("add reaction fired");
+    console.log("messageId:", messageId, "emojiId:", emojiId);
+
+    try {
+        // Insert a new reaction
+        await database.query(
+            `INSERT INTO message_emoji_user (message_id, emoji_id, user_id) VALUES (?, ?, ?)`,
+            [messageId, emojiId, userId]
+        );
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Error adding reaction:", error);
+        // Handle duplicate key error if the reaction already exists.
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// remove reaction from message
+app.post('/reaction/remove', async (req, res) => {
+    requireLogin(req, res);
+    const userId = req.session.user.user_id;
+    const { messageId, emojiId } = req.body;
+
+    console.log("remove reaction fired");
+    console.log("messageId:", messageId, "emojiId:", emojiId);
+
+
+    try {
+        // Delete the reaction for the given message, emoji, and user.
+        await database.query(
+            `DELETE FROM message_emoji_user WHERE message_id = ? AND emoji_id = ? AND user_id = ?`,
+            [messageId, emojiId, userId]
+        );
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Error removing reaction:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+
+
 
 //create new room page
 app.get('/create_room', async (req, res) => {

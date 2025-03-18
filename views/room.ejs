@@ -9,7 +9,7 @@
 
 <body>
     <%
-        // グループ化: reactedEmojis をメッセージ毎、かつ絵文字毎にまとめる
+        // Grouping reactions by message
         let reactionsByMessage = {};
 
         reactedEmojis.forEach(function (reaction) {
@@ -30,8 +30,9 @@
             if (reaction.reacter_id === userId) {
                 reactionsByMessage[msgId][emojiId].reactedByUser = true;
             }
-        }); // unread marker flag
+        });
 
+        // unread marker flag
         let insertedUnreadMarker = false;    
 
     %>
@@ -102,12 +103,27 @@
                                 </span>
                                 <% }); %>
                         </div>
+
+                        <!-- Reaction Candidates: hidden by default -->
+                        <div class="reaction-candidates" id="candidates-<%= msg.message_id %>" style="display: none;">
+                            <!-- Hardcoded candidate emojis; ideally, these come from your database -->
+                            <span class="candidate" data-message-id="<%= msg.message_id %>" data-emoji-id="1">
+                                <img src="/thumbsup.png" alt="thumbsup" class="emoji-icon">
+                            </span>
+                            <span class="candidate" data-message-id="<%= msg.message_id %>" data-emoji-id="2">
+                                <img src="/100.png" alt="100percent" class="emoji-icon">
+                            </span>
+                            <span class="candidate" data-message-id="<%= msg.message_id %>" data-emoji-id="3">
+                                <img src="/happy.png" alt="happy" class="emoji-icon">
+                            </span>
+                        </div>
+
                         <% } else { %>
-                            <!-- もしそのメッセージに一件も反応がなければ、[+]ボタンを表示 -->
+                            <!-- [+] button if no reaction on the message -->
                             <div class="reactions">
                                 <button class="reaction-btn add-reaction"
                                     data-message-id="<%= msg.message_id %>"
-                                    data-emoji-id="">[+]</button>
+                                    data-emoji-id="">[+reacion]</button>
                             </div>
                             <% } %>
 
@@ -126,6 +142,97 @@
                 <button type="submit">Send</button>
             </form>
         </div>
+
+<!-- Inline Script for Reaction Handling -->
+<script>
+    // Utility to toggle candidate menu visibility for a given message
+    function toggleCandidates(messageId) {
+        const candidatesDiv = document.getElementById('candidates-' + messageId);
+        if (candidatesDiv.style.display === 'none') {
+            candidatesDiv.style.display = 'block';
+        } else {
+            candidatesDiv.style.display = 'none';
+        }
+    }
+
+    // Add click event listeners for reaction buttons
+    document.querySelectorAll('.reaction-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            const messageId = this.getAttribute('data-message-id');
+            // If it's an add reaction button, show candidate menu
+            if (this.classList.contains('add-reaction')) {
+                // toggleCandidates(messageId);
+                // Send AJAX request to add reaction
+                // Replace with your actual endpoint
+                fetch('/reaction/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messageId: messageId, emojiId: this.getAttribute('data-emoji-id') })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Optionally update the UI or reload the page
+                            window.location.reload();
+                        }
+                    })
+                    .catch(err => console.error(err));
+
+            } else if (this.classList.contains('remove-reaction')) {
+                // Remove reaction AJAX call
+                // Replace with your actual endpoint
+                fetch('/reaction/remove', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messageId: messageId, emojiId: this.getAttribute('data-emoji-id')})
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Optionally, update the UI (e.g., hide candidates, update counts)
+                            window.location.reload();
+                        }
+                    })
+                    .catch(err => console.error(err));
+            }
+        });
+    });
+
+    // Add click event listeners for candidate emojis
+    document.querySelectorAll('.candidate').forEach(function (candidate) {
+        candidate.addEventListener('click', function (e) {
+            e.preventDefault();
+            const messageId = this.getAttribute('data-message-id');
+            const emojiId = this.getAttribute('data-emoji-id');
+            // Send AJAX request to add reaction
+            // Replace with your actual endpoint
+            fetch('/reaction/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ messageId: messageId, emojiId: emojiId })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Optionally update the UI or reload the page
+                        window.location.reload();
+                    }
+                })
+                .catch(err => console.error(err));
+        });
+    });
+
+    // Optionally, hide candidate menus when clicking elsewhere
+    document.addEventListener('click', function (e) {
+        if (!e.target.classList.contains('reaction-btn') && !e.target.classList.contains('candidate') &&
+            !e.target.closest('.reaction-candidates')) {
+            document.querySelectorAll('.reaction-candidates').forEach(function (div) {
+                div.style.display = 'none';
+            });
+        }
+    });
+</script>
 
 <script>
     // send a request when the user leaves the room

@@ -51,8 +51,7 @@
 
                     <% if (!insertedUnreadMarker && msg.unread==1) { insertedUnreadMarker=true; %>
                         <div class="unread-marker">
-                            <hr class="dotted-line">
-                            <p>unread messages</p>
+                            <p>- - - - - - - unread messages- - - - - - -</p>
                         </div>
                         <% } %>
 
@@ -64,8 +63,15 @@
                                     <div class="message-box <%= isSelf ? 'self' : '' %>">
                                         <%= msg.text %>
                                     </div>
+
+                                    <% // msg.sent_datetime
+                                    let d = new Date(msg.sent_datetime);
+                                    let datePart=d.toLocaleDateString('en-US', { month: 'short' , day: 'numeric' , year: 'numeric' });
+                                    let timePart=d.toLocaleTimeString('en-US', { hour: '2-digit' , minute: '2-digit' , hour12: false });
+                                    %>
+
                                     <div class="sent-datetime">
-                                        <%= msg.sent_datetime %>
+                                        <%= datePart %> <%= timePart %>
                                     </div>
 
                                     <!-- emoji reactions -->

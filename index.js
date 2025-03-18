@@ -190,13 +190,11 @@ app.get('/members', async (req, res) => {
 
     try {
         [rooms] = await database.query(getRoomListQuery, [username])
+        res.render("members", { username, rooms });
     } catch (error) {
         console.error("Error fetching chat rooms:", error);
         res.status(500).send("Server error");
     }
-    
-    res.render("members", { username, rooms });
-
 });
 
 // logout

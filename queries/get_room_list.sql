@@ -1,4 +1,3 @@
-
 WITH user_data AS (
 SELECT
     u.user_id
@@ -12,6 +11,13 @@ FROM user u
     LEFT JOIN room r ON ru.room_id = r.room_id
     LEFT JOIN message m ON ru.room_user_id = m.room_user_id
 WHERE u.username = ?
+GROUP BY
+    u.user_id
+    , u.username
+    , ru.room_user_id
+    , ru.room_id
+    , last_read_message_id
+    , r.name
 )
 
 , unread_count AS (

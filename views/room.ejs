@@ -103,7 +103,15 @@
                                 </span>
                                 <% }); %>
                         </div>
+                        <% } else { %>
+                            <!-- [+] button if no reaction on the message -->
+                            <div class="reactions">
+                                <button class="reaction-btn add-reaction" data-message-id="<%= msg.message_id %>"
+                                    data-emoji-id="">[+reacion]</button>
+                            </div>
+                            <% } %>
 
+                            
                         <!-- Reaction Candidates: hidden by default -->
                         <div class="reaction-candidates" id="candidates-<%= msg.message_id %>" style="display: none;">
                             <!-- Hardcoded candidate emojis; ideally, these come from your database -->
@@ -118,14 +126,7 @@
                             </span>
                         </div>
 
-                        <% } else { %>
-                            <!-- [+] button if no reaction on the message -->
-                            <div class="reactions">
-                                <button class="reaction-btn add-reaction"
-                                    data-message-id="<%= msg.message_id %>"
-                                    data-emoji-id="">[+reacion]</button>
-                            </div>
-                            <% } %>
+
 
                 </div>
             </div>
@@ -162,22 +163,23 @@
             const messageId = this.getAttribute('data-message-id');
             // If it's an add reaction button, show candidate menu
             if (this.classList.contains('add-reaction')) {
-                // toggleCandidates(messageId);
+                toggleCandidates(messageId);
                 // Send AJAX request to add reaction
                 // Replace with your actual endpoint
-                fetch('/reaction/add', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ messageId: messageId, emojiId: this.getAttribute('data-emoji-id') })
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            // Optionally update the UI or reload the page
-                            window.location.reload();
-                        }
-                    })
-                    .catch(err => console.error(err));
+
+                // fetch('/reaction/add', {
+                //     method: 'POST',
+                //     headers: { 'Content-Type': 'application/json' },
+                //     body: JSON.stringify({ messageId: messageId, emojiId: this.getAttribute('data-emoji-id') })
+                // })
+                //     .then(response => response.json())
+                //     .then(data => {
+                //         if (data.success) {
+                //             // Optionally update the UI or reload the page
+                //             window.location.reload();
+                //         }
+                //     })
+                //     .catch(err => console.error(err));
 
             } else if (this.classList.contains('remove-reaction')) {
                 // Remove reaction AJAX call

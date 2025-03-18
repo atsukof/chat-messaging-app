@@ -38,84 +38,85 @@
 
     <h1>Room: <%= roomName[0].room_name %>
     </h1>
-    <button onclick="location.href='/invite_people/<%= roomId %>'">Invite people</button>
+    <div>
+        <button onclick="location.href='/invite_people/<%= roomId %>'">Invite people</button>
+    </div>
 
+    <div>
+        <% if (messages && messages.length> 0) { %>
+            <% messages.forEach(msg=> {
+                // check if the message is sent by the user
+                let isSelf = (msg.sender_id && msg.sender_id === userId) ||
+                (!msg.sender_id && msg.sender_name === username);
+                %>
 
-        <div>
-            <% if (messages && messages.length> 0) { %>
-                <% messages.forEach(msg=> {
-                    // check if the message is sent by the user
-                    let isSelf = (msg.sender_id && msg.sender_id === userId) ||
-                    (!msg.sender_id && msg.sender_name === username);
+            <% if (!insertedUnreadMarker && msg.unread==1) { insertedUnreadMarker=true; %>
+                <div class="unread-marker">
+                    <p>- - - - - - - unread messages- - - - - - -</p>
+                </div>
+                <% } %>
+
+            <div class="message-container <%= isSelf ? 'right' : 'left' %>">
+                <div class="message-wrapper">
+                    <div class="sender-name">
+                        <%= msg.sender_name %>
+                    </div>
+                    <div class="message-box <%= isSelf ? 'self' : '' %>">
+                        <%= msg.text %>
+                    </div>
+
+                    <% // msg.sent_datetime
+                    let d = new Date(msg.sent_datetime);
+                    let datePart=d.toLocaleDateString('en-US', { month: 'short' , day: 'numeric' , year: 'numeric' });
+                    let timePart=d.toLocaleTimeString('en-US', { hour: '2-digit' , minute: '2-digit' , hour12: false });
                     %>
 
-                    <% if (!insertedUnreadMarker && msg.unread==1) { insertedUnreadMarker=true; %>
-                        <div class="unread-marker">
-                            <p>- - - - - - - unread messages- - - - - - -</p>
-                        </div>
-                        <% } %>
+                    <div class="sent-datetime">
+                        <%= datePart %> <%= timePart %>
+                    </div>
 
-                            <div class="message-container <%= isSelf ? 'right' : 'left' %>">
-                                <div class="message-wrapper">
-                                    <div class="sender-name">
-                                        <%= msg.sender_name %>
-                                    </div>
-                                    <div class="message-box <%= isSelf ? 'self' : '' %>">
-                                        <%= msg.text %>
-                                    </div>
-
-                                    <% // msg.sent_datetime
-                                    let d = new Date(msg.sent_datetime);
-                                    let datePart=d.toLocaleDateString('en-US', { month: 'short' , day: 'numeric' , year: 'numeric' });
-                                    let timePart=d.toLocaleTimeString('en-US', { hour: '2-digit' , minute: '2-digit' , hour12: false });
-                                    %>
-
-                                    <div class="sent-datetime">
-                                        <%= datePart %> <%= timePart %>
-                                    </div>
-
-                                    <!-- emoji reactions -->
-                                    <% if (reactionsByMessage[msg.message_id]) { %>
-                                        <div class="reactions">
-                                            <% Object.keys(reactionsByMessage[msg.message_id]).forEach(function(emojiId)
-                                                { let reaction=reactionsByMessage[msg.message_id][emojiId]; %>
-                                                <span class="reaction">
-                                                    <img src="/<%= reaction.emoji_image %>"
-                                                        alt="<%= reaction.emoji_name %>" class="emoji-icon">
-                                                    <% if (reaction.count> 1) { %>
-                                                        <span class="reaction-count">
-                                                            <%= reaction.count %>
-                                                        </span>
-                                                        <% } %>
-                                                            <!-- check reaction by the user -->
-                                                            <% if (reaction.reactedByUser) { %>
-                                                                <button class="reaction-btn remove-reaction"
-                                                                    data-message-id="<%= msg.message_id %>"
-                                                                    data-emoji-id="<%= emojiId %>">[-]</button>
-                                                                <% } else { %>
-                                                                    <button class="reaction-btn add-reaction"
-                                                                        data-message-id="<%= msg.message_id %>"
-                                                                        data-emoji-id="<%= emojiId %>">[+]</button>
-                                                                    <% } %>
-                                                </span>
-                                                <% }); %>
-                                        </div>
-                                        <% } else { %>
-                                            <!-- もしそのメッセージに一件も反応がなければ、[+]ボタンを表示 -->
-                                            <div class="reactions">
-                                                <button class="reaction-btn add-reaction"
+                    <!-- emoji reactions -->
+                    <% if (reactionsByMessage[msg.message_id]) { %>
+                        <div class="reactions">
+                            <% Object.keys(reactionsByMessage[msg.message_id]).forEach(function(emojiId)
+                                { let reaction=reactionsByMessage[msg.message_id][emojiId]; %>
+                                <span class="reaction">
+                                    <img src="/<%= reaction.emoji_image %>"
+                                        alt="<%= reaction.emoji_name %>" class="emoji-icon">
+                                    <% if (reaction.count> 1) { %>
+                                        <span class="reaction-count">
+                                            <%= reaction.count %>
+                                        </span>
+                                        <% } %>
+                                            <!-- check reaction by the user -->
+                                            <% if (reaction.reactedByUser) { %>
+                                                <button class="reaction-btn remove-reaction"
                                                     data-message-id="<%= msg.message_id %>"
-                                                    data-emoji-id="">[+]</button>
-                                            </div>
-                                            <% } %>
-
-                                </div>
+                                                    data-emoji-id="<%= emojiId %>">[-]</button>
+                                                <% } else { %>
+                                                    <button class="reaction-btn add-reaction"
+                                                        data-message-id="<%= msg.message_id %>"
+                                                        data-emoji-id="<%= emojiId %>">[+]</button>
+                                                    <% } %>
+                                </span>
+                                <% }); %>
+                        </div>
+                        <% } else { %>
+                            <!-- もしそのメッセージに一件も反応がなければ、[+]ボタンを表示 -->
+                            <div class="reactions">
+                                <button class="reaction-btn add-reaction"
+                                    data-message-id="<%= msg.message_id %>"
+                                    data-emoji-id="">[+]</button>
                             </div>
-                            <% }); %>
-                                <% } else { %>
-                                    <p>No message in the room.</p>
-                                    <% } %>
-        </div>
+                            <% } %>
+
+                </div>
+            </div>
+            <% }); %>
+                <% } else { %>
+                    <p>No message in the room.</p>
+                    <% } %>
+    </div>
 
         <!-- form for a new message -->
         <div class="new-message">

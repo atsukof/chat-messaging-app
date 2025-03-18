@@ -62,7 +62,7 @@ async function createTables() {
             message_id int NOT NULL,
             emoji_id int NOT NULL,
             user_id int NOT NULL,
-            PRIMARY KEY (message_emoji_id),
+            PRIMARY KEY (message_emoji_user_id),
             UNIQUE KEY message_id (message_id,emoji_id,user_id),
             KEY emoji_id (emoji_id),
             KEY user_id (user_id),

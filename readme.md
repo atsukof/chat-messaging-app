@@ -22,6 +22,6 @@ A web-based chat room application built with Node.js, Express, and MySQL. It sup
 ## Test users
 You can try this app with the test users.
 
-- Username: Patrick | Password: Str0ng#Pass
+- Username: Tom | Password: Str0ng#Pass
 - Username: John | Password: P@ssword2023$
 - Username: Tracy | Password: V3ry$afePass

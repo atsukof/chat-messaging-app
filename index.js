@@ -119,7 +119,7 @@ app.post('/login', async (req, res) => {
             return res.render('login', { error: 'Invalid username or password', username });
         }
 
-        // req.session.user = { username };
+        // set user_id and username in session
         req.session.user = {
             user_id: rows[0].user_id,
             username: rows[0].username
@@ -146,6 +146,16 @@ app.post('/signup', async (req, res) => {
         return res.render('signup', { error: 'All fields are required', username });
     }
 
+    // check if password meets the requirements
+    // at least 10 characters with upper/lower, numbers, symbols
+    const passwordValidationRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{10,}$/;
+    if (!passwordValidationRegex.test(password)) {
+        return res.render('signup', {
+            error: 'Your password does not meet the requirements.',
+            username
+        });
+    }
+
     try {
         const [existingRows] = await database.query('SELECT * FROM user WHERE username = ?', [username]);
         if (existingRows.length > 0) {
@@ -155,7 +165,13 @@ app.post('/signup', async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, saltRounds);
         await database.query('INSERT INTO user (username, password) VALUES (?, ?)', [username, hashedPassword]);
 
-        req.session.user = { username };
+        const [rows] = await database.query('SELECT * FROM user WHERE username = ?', [username]);
+
+        // set user_id and username in session
+        req.session.user = {
+            user_id: rows[0].user_id,
+            username: rows[0].username
+        };
         res.redirect('/');
 
     } catch (error) {
@@ -363,9 +379,9 @@ app.post('/create_room', async (req, res) => {
                     `INSERT INTO room_user (user_id, room_id, last_read_message_id) VALUES (?, ?, 0)`,
                     [invitedUserId, newRoomId]
                 );
-            }   
-            res.redirect(`/members`);
-            }    
+            }
+        }        
+        res.redirect(`/members`);
     } catch (error) {
         console.error('Error creating new room:', error);
         res.status(500).send('Server error');

@@ -4,44 +4,51 @@
 <head>
     <meta charset="UTF-8" />
     <title>Create a new room</title>
+    <link rel="stylesheet" href="/css/output.css">
 </head>
 
-<body>
-    <h1>Create a new room</h1>
-    
-    <% if (error) { %>
-        <p style="color: red;">
-            <%= error %>
-        </p>
-        <% } %>
+<body class="bg-gray-100 min-h-screen">
+  <div class="container mx-auto p-6">
+    <div class="bg-white rounded-lg shadow-md p-6 max-w-2xl mx-auto">
+      <h1 class="text-2xl font-bold text-gray-800 mb-6">Create a new room</h1>
+      
+      <% if (error) { %>
+      <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <%= error %>
+      </div>
+      <% } %>
 
-    <form action="/create_room" method="POST">
-        <!-- Room Name -->
-        <div class="form-group">
-            <label for="roomName">Room Name:</label>
-            <input type="text" id="roomName" name="roomName" required>
-        </div>
-    
-        <!-- People to Invite -->
-        <div class="form-group">
-            <p>People to invite:</p>
-            <% if (userList && userList.length> 0) { %>
-                <% userList.forEach(function(user) { %>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="user_<%= user.user_id %>" name="inviteUsers" value="<%= user.user_id %>">
-                        <label for="user_<%= user.user_id %>">
-                            <%= user.username %>
-                        </label>
-                    </div>
-                    <% }); %>
-                        <% } else { %>
-                            <p>No people to invite.</p>
-                            <% } %>
-        </div>
-    
-        <!-- Submit Button -->
-        <button type="submit">Create a new room</button>
-    </form>
+      <form action="/create_room" method="POST" class="space-y-6">
+          <!-- Room Name -->
+          <div>
+              <label for="roomName" class="block text-sm font-medium text-gray-700 mb-2">Room Name:</label>
+              <input type="text" id="roomName" name="roomName" class="form-input" required>
+          </div>
+      
+          <!-- People to Invite -->
+          <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">People to invite:</label>
+              <div class="space-y-2 max-h-64 overflow-y-auto border border-gray-300 rounded p-4">
+                  <% if (userList && userList.length> 0) { %>
+                      <% userList.forEach(function(user) { %>
+                          <div class="flex items-center">
+                              <input type="checkbox" id="user_<%= user.user_id %>" name="inviteUsers" value="<%= user.user_id %>" class="mr-2">
+                              <label for="user_<%= user.user_id %>" class="text-sm text-gray-700">
+                                  <%= user.username %>
+                              </label>
+                          </div>
+                          <% }); %>
+                              <% } else { %>
+                                  <p class="text-gray-500 text-sm">No people to invite.</p>
+                                  <% } %>
+              </div>
+          </div>
+      
+          <!-- Submit Button -->
+          <button type="submit" class="btn w-full">Create a new room</button>
+      </form>
+    </div>
+  </div>
 </body>
 
 </html>

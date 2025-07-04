@@ -4,10 +4,11 @@
 <head>
     <meta charset="UTF-8" />
     <title>Chat room</title>
+    <link rel="stylesheet" href="/css/output.css">
     <link rel="stylesheet" href="../css/room.css">
 </head>
 
-<body>
+<body class="bg-gray-100 min-h-screen">
     <%
         // Grouping reactions by message
         let reactionsByMessage = {};
@@ -37,14 +38,16 @@
 
     %>
 
-    <h1>Room: <%= roomName[0].room_name %>
-    </h1>
-    <div>
-        <button onclick="location.href='/invite_people/<%= roomId %>'">Invite people</button>
-        <button onclick="location.href='/members'">Go back to room list</button>
-    </div>
+  <div class="container mx-auto p-6">
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+      <h1 class="text-2xl font-bold text-gray-800 mb-4">Room: <%= roomName[0].room_name %></h1>
+      <div class="space-x-4">
+          <button onclick="location.href='/invite_people/<%= roomId %>'" class="btn">Invite people</button>
+          <button onclick="location.href='/members'" class="btn btn-secondary">Go back to room list</button>
+      </div>
 
-    <div>
+
+
         <% if (messages && messages.length> 0) { %>
             <% messages.forEach(msg=> {
                 // check if the message is sent by the user
@@ -132,17 +135,19 @@
             </div>
             <% }); %>
                 <% } else { %>
-                    <p>No message in the room.</p>
+                    <p class="text-gray-500 text-center py-8">No message in the room.</p>
                     <% } %>
-    </div>
 
-        <!-- form for a new message -->
-        <div class="new-message">
-            <form action="/room/<%= roomId %>/send" method="POST">
-                <textarea name="messageText" placeholder="Type your message here" required></textarea>
-                <button type="submit">Send</button>
-            </form>
-        </div>
+
+    <!-- form for a new message -->
+    <div>
+        <form action="/room/<%= roomId %>/send" method="POST" class="space-y-4">
+            <textarea name="messageText" placeholder="Type your message here" class="form-input" rows="3" required></textarea>
+            <button type="submit" class="btn">Send</button>
+        </form>
+    </div>
+    </div>
+  </div>
 
 <!-- Inline Script for Reaction Handling -->
 <script>

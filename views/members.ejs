@@ -3,53 +3,94 @@
 <head>
   <meta charset="UTF-8" />
   <title>Members</title>
+  <link rel="stylesheet" href="/css/output.css">
 </head>
-<body>
-    <h1>Hello, <%= username %>.</h1>
-    <div>
-        <img src="/chatting.jpeg" alt="Generated Ukiyoe Image" style="max-width:400px;">
-  </div>
+<body class="bg-gray-100 min-h-screen">
+  <div class="container mx-auto p-6">
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Hello, <%= username %>.</h1>
+      </div>
+      
+      <div class="text-center mb-6">
+        <img src="/chatting.jpeg" alt="Generated Ukiyoe Image" class="rounded-lg shadow-md" style="max-width:400px; margin: 0 auto;">
+        <div class="space-x-4">
+          <button onclick="location.href='/create_room'" class="btn">Create new room</button>
+          <button onclick="location.href='/logout'" class="btn btn-secondary">Sign out</button>
+        </div>
 
-  <button onclick="location.href='/create_room'">Create new room</button>
+      </div>
     
-  <p>Your chat rooms</p>
-  <table border="1" cellspacing="0" cellpadding="5">
-    <thead>
-      <tr>
-        <th>Room Name</th>
-        <th>Last Message Sent Datetime</th>
-        <th>Number of Unread Messages</th>
-      </tr>
-    </thead>
+      <div class="mt-8">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Your chat rooms</h2>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Room Name</th>
+              <th>Last Message Sent Datetime</th>
+              <th>Number of Unread Messages</th>
+            </tr>
+          </thead>
     <tbody>
       <% if (rooms && rooms.length> 0) { %>
         <% rooms.forEach(room=> { %>
           <tr>
             <td>
-              <a href="/room/<%= room.room_id %>">
+              <a href="/room/<%= room.room_id %>" class="text-blue-600 hover:text-blue-800 font-medium">
                 <%= room.room_name %>
               </a>
             </td>
             <td>
-              <%= room.latest_message_datetime %>
+              <% if (room.latest_message_datetime) { %>
+                <span class="datetime" data-datetime="<%= room.latest_message_datetime %>">
+                  <%= room.latest_message_datetime %>
+                </span>
+              <% } else { %>
+                -
+              <% } %>
             </td>
             <td>
-              <%= room.unread_count %>
+              <% if (room.unread_count > 0) { %>
+                <span class="bg-red-500 text-white px-2 py-1 rounded-full text-sm">
+                  <%= room.unread_count %>
+                </span>
+              <% } else { %>
+                <span class="text-gray-500">0</span>
+              <% } %>
             </td>
           </tr>
           <% }); %>
             <% } else { %>
               <tr>
-                <td colspan="3">No rooms available.</td>
+                <td colspan="3" class="text-center text-gray-500 py-8">No rooms available.</td>
               </tr>
               <% } %>
-    </tbody>
-  </table>
-
-  <br />
-  <button onclick="location.href='/logout'">sign out</button>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
   <script>
+    // Convert datetime to user's local timezone
+    function formatToLocalTime() {
+      document.querySelectorAll('.datetime').forEach(function(element) {
+        const datetimeStr = element.getAttribute('data-datetime');
+        if (datetimeStr && datetimeStr !== 'null') {
+          const date = new Date(datetimeStr);
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          element.textContent = `${year}-${month}-${day} ${hours}:${minutes}`;
+        }
+      });
+    }
+
+    // Run conversion when page loads
+    formatToLocalTime();
+
     window.addEventListener('pageshow', function (event) {
       console.log('pageshow event fired');
       if (event.persisted) {
